@@ -39,7 +39,7 @@ Access the Swagger documentation at http://localhost:2114/v1/docs
 
 ## Testing
 Run tests with:
-    ```bash
-    npm run test
-    ```
+```bash
+   npm run test
+```
 
