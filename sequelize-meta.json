@@ -1,0 +1,5 @@
+[
+  "001_create_users_table.js",
+  "002_create_contacts_table.js",
+  "003_create_companies_table.js"
+]

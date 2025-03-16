@@ -1,21 +1,30 @@
-const { check } = require("express-validator");
-const { UnprocessableEntity } = require("../../constants/errors");
-const validate = require("../../middleware/validation.middleware");
+const { body } = require('express-validator');
+const validate = require('../../middleware/validation.middleware');
 
-const getAuth = [
-  check("user")
+const registerValidation = [
+  body('username')
     .notEmpty()
-    .withMessage({
-      code: UnprocessableEntity,
-      message: "user: parameter is required",
-    })
-    .bail()
-    .custom((value) => value.id)
-    .withMessage({
-      code: UnprocessableEntity,
-      message: "user.id: parameter is required",
-    }),
-  validate,
+    .withMessage('Username is required')
+    .isLength({ min: 3 })
+    .withMessage('Username must be at least 3 characters long')
+    .matches(/^[a-zA-Z0-9_@.]+$/)
+    .withMessage('Username can only contain letters, numbers, underscores, @, and .'),
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+  validate
 ];
 
-module.exports = { getAuth };
+const loginValidation = [
+  body('username')
+    .notEmpty()
+    .withMessage('Username is required'),
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required'),
+  validate
+];
+
+module.exports = { registerValidation, loginValidation };

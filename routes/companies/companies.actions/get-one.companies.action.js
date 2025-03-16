@@ -1,30 +1,37 @@
 const logger = require("../../../services/logger.service")(module);
 const { OK } = require("../../../constants/http-codes");
-const companyMethods = require("../../../DB/sample-db/methods/company");
+const { Company, Contact } = require("../../../DB/models");
 const { getUrlForRequest } = require("../../../helpers/url.helper");
 const { NotFound } = require("../../../constants/errors");
 const { parseOne } = require("../companies.service");
+const { send } = require("../../../services/response.service");
 
-/**
- * GET /companies/:id
- * Эндпоинт получения данных компании.
- * @param {Object} req
- * @param {Object} res
- * @return {Promise<void>}
- */
-async function getOne(req, res) {
-  logger.init("get company");
-  const { id } = req.params;
+async function getOne(req, res, next) {
+  try {
+    logger.init("get company");
+    const { id } = req.params;
 
-  const company = companyMethods.getOne(id);
-  if (!company) {
-    throw new NotFound("Company not found");
+    const company = await Company.findByPk(id, {
+      include: [{
+        model: Contact,
+        as: 'contact',
+        required: false
+      }],
+    });
+
+    if (!company) {
+      throw new NotFound("Company not found");
+    }
+
+    const photoUrl = getUrlForRequest(req);
+    const result = parseOne(company, photoUrl);
+
+    send(OK, res, result, "Company retrieved successfully");
+    logger.success();
+  } catch (error) {
+    logger.error("get company error:", error.message);
+    next(error);
   }
-
-  const photoUrl = getUrlForRequest(req);
-
-  res.status(OK).json(parseOne(company, photoUrl));
-  logger.success();
 }
 
 module.exports = {

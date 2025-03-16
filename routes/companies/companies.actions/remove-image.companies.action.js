@@ -4,41 +4,44 @@ const { OK } = require("../../../constants/http-codes");
 const imagesConfig = require("../../../config").images;
 const imageService = require("../../../services/image.service");
 const { NotFound } = require("../../../constants/errors");
-const companyMethods = require("../../../DB/sample-db/methods/company");
+const { Company } = require("../../../DB/models");
 
-/**
- * DELETE /companies/:id/image
- * Эндпоинт удаления изображения компании.
- * @param {Object} req
- * @param {Object} res
- * @return {Promise<void>}
- */
-async function removeImage(req, res) {
-  logger.init("remove company image");
-  const { id } = req.params;
-  const { id: userId } = req.payload;
-  const { image_name: fileName } = req.query;
+async function removeImage(req, res, next) {
+  try {
+    logger.init("remove company image");
+    const { id } = req.params;
+    const { id: userId } = req.payload;
+    const { image_name: fileName } = req.query;
 
-  const company = companyMethods.getOne(id);
-  if (!company) {
-    throw new NotFound("Company not found");
+    const company = await Company.findByPk(id);
+    if (!company) {
+      throw new NotFound("Company not found");
+    }
+
+    const filePath = path.resolve(
+      `${imagesConfig.uploadsDir}/${userId}/${fileName}`
+    );
+    await imageService.removeImage(filePath);
+
+    const fileExtension = path.extname(fileName).toLowerCase();
+    const _fileName = fileName.split(".").slice(0, -1).join(".");
+    const thumbName = `${_fileName}_${imagesConfig.thumbSize}x${imagesConfig.thumbSize}${fileExtension}`;
+    const thumbPath = path.resolve(
+      `${imagesConfig.uploadsDir}/${userId}/${thumbName}`
+    );
+    await imageService.removeImage(thumbPath);
+
+
+    const currentPhotos = company.photos || [];
+    const updatedPhotos = currentPhotos.filter(photo => photo.name !== fileName);
+    await company.update({ photos: updatedPhotos });
+
+    res.status(OK).json();
+    logger.success();
+  } catch (error) {
+    logger.error("remove company image error:", error.message);
+    next(error);
   }
-
-  const filePath = path.resolve(
-    `${imagesConfig.imagesDir}/${userId}/${fileName}`
-  );
-  await imageService.removeImage(filePath);
-
-  const fileExtension = path.extname(fileName).toLowerCase();
-  const _fileName = fileName.split(".").slice(0, -1).join(".");
-  const thumbName = `${_fileName}_${imagesConfig.thumbSize}x${imagesConfig.thumbSize}${fileExtension}`;
-  const thumbPath = path.resolve(
-    `${imagesConfig.imagesDir}${userId}/${thumbName}`
-  );
-  await imageService.removeImage(thumbPath);
-
-  res.status(OK).json();
-  logger.success();
 }
 
 module.exports = {

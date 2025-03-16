@@ -1,5 +1,6 @@
-const config = {};
+require('dotenv').config(); 
 const path = require("path");
+const config = {};
 
 // APP SETTINGS
 config.port = 2114;
@@ -9,7 +10,7 @@ config.url = "http://localhost:2114";
 // ENV
 config.env = {};
 config.env.dev = process.env.NODE_ENV === "dev";
-config.env.production = process.env.NODE_ENV === "production";
+config.env.production = process.env.NODE_ENV === "prod";
 config.env.test = process.env.NODE_ENV === "test";
 
 // DB SETTINGS
@@ -18,6 +19,12 @@ config.dbs.sample_db = {};
 config.dbs.sample_db.uri = "mongodb://user:password@db_host";
 config.dbs.sample_db.database = "db_name";
 config.dbs.sample_db.id = "sample_db";
+config.database = {};
+config.database.host = process.env.DB_HOST || "localhost";
+config.database.port = process.env.DB_PORT || 5432;
+config.database.name = process.env.DB_NAME || "test_api_db";
+config.database.user = process.env.DB_USER || "postgres";
+config.database.password = process.env.DB_PASSWORD || "123123";
 
 // LOG SETTINGS
 config.log = {};
@@ -45,7 +52,7 @@ config.cors.exposedHeaders = ["X-Total-Count", "Content-Type", "Authorization"];
 
 // JWT SERVICE SETTINGS
 config.jwt = {};
-config.jwt.secretKey = "";
+config.jwt.secretKey = process.env.JWT_SECRET;
 config.jwt.sign = {};
 config.jwt.sign.issuer = "Test API js backend";
 config.jwt.sign.audience = "";

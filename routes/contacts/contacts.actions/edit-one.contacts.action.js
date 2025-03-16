@@ -1,29 +1,28 @@
 const logger = require("../../../services/logger.service")(module);
 const { OK } = require("../../../constants/http-codes");
-const contactMethods = require("../../../DB/sample-db/methods/contact");
+const { Contact } = require("../../../DB/models");
 const { NotFound } = require("../../../constants/errors");
+const { send } = require("../../../services/response.service");
 
-/**
- * PATCH /contacts/:id
- * Эндпоинт редактирования данных контакта.
- * @param {Object} req
- * @param {Object} res
- * @return {Promise<void>}
- */
-async function editOne(req, res) {
-  logger.init("edit contact");
-  const { id } = req.params;
-  const data = req.body;
+async function editOne(req, res, next) {
+  try {
+    logger.init("edit contact");
+    const { id } = req.params;
+    const data = req.body;
 
-  const contact = contactMethods.getOne(id);
-  if (!contact) {
-    throw new NotFound("Contact not found");
+    const contact = await Contact.findByPk(id);
+    if (!contact) {
+      throw new NotFound("Contact not found");
+    }
+
+    await contact.update(data);
+    await contact.reload();
+    send(OK, res, contact, "Contact updated successfully");
+    logger.success();
+  } catch (error) {
+    logger.error("edit contact error:", error.message);
+    next(error);
   }
-
-  const updated = contactMethods.editOne(id, data);
-
-  res.status(OK).json(updated);
-  logger.success();
 }
 
 module.exports = {

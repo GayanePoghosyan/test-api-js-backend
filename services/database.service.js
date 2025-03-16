@@ -1,61 +1,48 @@
-const dbsConfig = require("../config").dbs;
-const logger = require("./logger.service")(module);
+const sequelize = require('../DB/config/sequelize-configs');
+const logger = require('./logger.service')(module);
 
-/**
- * Базовый класс сервиса работы с базой данных
- */
-class Database {
-  #uri;
+let databaseInstance = null;
 
-  #id;
-
-  #database;
-
-  #connection;
-
-  constructor(config) {
-    this.#uri = config.uri;
-    this.#id = config.id;
-    this.#database = config.database;
+const initializeDatabase = (sequelizeInstance) => {
+  if (databaseInstance) {
+    return databaseInstance;
   }
 
-  /**
-   * Открывает соединение с БД.
-   * @return {Promise<void>}
-   */
-  async connect() {
-    try {
-      // todo: метод установки соединения с БД
-      logger.info(`Connected to ${this.#id}`);
-    } catch (error) {
-      logger.error(`Unable to connect to ${this.#id}:`, error.message);
-    }
-  }
-
-  /**
-   * Закрывает соединение с БД.
-   * @return {Promise<void>}
-   */
-  async disconnect() {
-    if (this.#connection) {
+  const connect = async (maxRetries = 3, retryDelay = 1000) => {
+    let retries = 0;
+    while (retries < maxRetries) {
       try {
-        // todo: метод закрытия соединения с БД
-        logger.info(`Disconnected from ${this.#id}`);
+        await sequelizeInstance.authenticate();
+        logger.info('Connected to database');
+        return;
       } catch (error) {
-        logger.error(`Unable to disconnect from ${this.#id}:`, error.message);
+        retries++;
+        logger.warn(`Retry ${retries}/${maxRetries} for database`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
     }
-  }
+    throw new Error(`Failed to connect after ${maxRetries} attempts`);
+  };
 
-  /**
-   * Возвращает объект соединения с БД,
-   * @return {Object}
-   */
-  get connection() {
-    return this.#connection;
-  }
-}
+  const disconnect = async () => {
+    try {
+      await sequelizeInstance.close();
+      logger.info('Disconnected from database');
+    } catch (error) {
+      logger.error('Disconnection error:', error.message);
+      throw error;
+    }
+  };
 
-const sampleDB = new Database(dbsConfig.sample_db);
+  databaseInstance = {
+    connect,
+    disconnect,
+    sequelize: sequelizeInstance
+  };
 
-module.exports = { sampleDB };
+  return databaseInstance;
+};
+
+const database = initializeDatabase(sequelize);
+
+module.exports = { database, initializeDatabase };

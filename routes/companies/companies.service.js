@@ -6,7 +6,7 @@
  */
 function parseOne(item, photoUrl) {
   return {
-    ...item,
+    ...item.toJSON(),
     photos: item.photos.map((photo) => ({
       ...photo,
       name: `${photoUrl}static/${photo.name}`,

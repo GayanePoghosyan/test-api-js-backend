@@ -11,6 +11,7 @@ const config = require("./config");
 const logger = require("./services/logger.service")(module);
 const { errorsHandler } = require("./middleware/error-handler.middleware");
 const { OK } = require("./constants/http-codes");
+const  swaggerOptions  = require("./config/swagger");
 
 const app = express();
 
@@ -36,7 +37,6 @@ app.use((req, res, next) => {
 
 if (config.env.dev) {
   // swagger
-  const { swaggerOptions } = require("./config/swagger");
   const swaggerRoute = `/${config.prefix}/docs`;
   app.use(swaggerRoute, swaggerUI.serve, swaggerUI.setup(swaggerOptions));
 
