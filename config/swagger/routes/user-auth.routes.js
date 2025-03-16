@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /v1/users/register:
+ * /v1/auth/register:
  *   post:
  *     summary: Register a new user
  *     tags: [User]
@@ -51,7 +51,7 @@
  *             schema:
  *               $ref: '#/components/schemas/Error'
  * 
- * /v1/users/login:
+ * /v1/auth/login:
  *   post:
  *     summary: Authenticate user and get token
  *     tags: [User]
